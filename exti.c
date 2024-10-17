@@ -15,6 +15,7 @@
 #include "gpio.h"
 #include "systick.h"
 #include "main.h"
+#include "i2c.h"
 
 #define EXTI 0x40010400
 #define SYSCFG 0x40010000
@@ -55,6 +56,7 @@ void EXTI15_10_IRQHandler(void) {
         nvic_disable(); 
 	
 	gpio_led_toggle();
+//	i2c2_target_init();
 
         //clear any pending interrupts and re-enable interrupts
         EXTI_PR1 |= (1 << 13);

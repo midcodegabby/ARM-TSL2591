@@ -8,6 +8,7 @@
 
 //include files
 #include <stdint.h>
+#include <stdio.h>
 
 #include "i2c.h"
 #include "gpio.h"
@@ -41,9 +42,10 @@
 //initialize I2C2 registers 
 //I2C2 Settings: 100KHz SCL Frequency, 7-bit addressing mode
 void i2c2_init(void) {
-	uint8_t bus_state = 0xFF; //initialize an I2C bus state variable
-				  
+	I2C2_CR1 &= ~1; //disable I2C2 Peripheral
+
 	//enable interrupts here... if I want any
+	//enable NACK interrupt
 
 	//set up timing for 16MHz I2CCLK and 100KHz transmission frequency (from ST Reference Manual)
 	I2C2_TIMINGR |= (0x3 << 28); //PRESC
@@ -52,34 +54,76 @@ void i2c2_init(void) {
 	I2C2_TIMINGR |= (0xF << 8); //SCLH
 	I2C2_TIMINGR |= 0x13; //SCLL
 
-	I2C2_CR2 |= (1 << 25); //set autoend
-	I2C2_CR2 |= (1 << 16); //NBYTES = 1 (send 1 byte before automatic stop condition)
+	printf("here\n");	
+
 	I2C2_CR2 |= (TSL2591_ADDRESS << 1); //set target address
 
-	//wait for transmit register to be empty	
-	while ((I2C_ISR & 1) != 1);
+	I2C2_CR1 |= 1; //enable I2C2 Peripheral
+}
+
+//initialize communications with the target device and initialize the target device's registers
+void i2c2_target_init() {
+	uint8_t bus_state = 0xFF; //initialize an I2C bus state variable
+	
+	I2C2_CR2 |= (1 << 25); //set autoend
+	I2C2_CR2 |= (0x2 << 16); //NBYTES = 2 (send 2 bytes before automatic stop condition)
+
+	while (bus_state != 1) bus_state = gpio_i2c2_bus_poll(); //loop until bus is idle
+	while ((I2C2_ISR & 1) != 1); //loop until transmission register is empty
+
+	I2C2_TXDR = ((TSL2591_ADDRESS >> 1) + 0); //load the address into the transmission register
+	I2C2_CR2 |= (1 << 13); //send start condition
+
+	while ((I2C2_ISR & 1) != 1); //loop until the transmission register is empty
 
 	I2C2_TXDR = TSL2591_Init_Message; //load the init message into the transmission register
-
-	I2C2_CR1 |= 1; //enable I2C2 Peripheral
-
-	//loop until the I2C2 bus is idle - MIGHT NEED TO ONLY CHECK SDA?
-	while (bus_state != 1) bus_state = gpio_i2c2_bus_poll();
-
-	I2C2_CR2 |= (1 << 13); //send start condition
 	
 	//loop until the Stop condition is sent
 	while (!(I2C2_ISR >> 5) & 1); 
 
-	//clear the Stop flag
-	I2C2_ICR |= (1 << 5);
+	I2C2_ICR |= (1 << 5); //clear Stop flag
+			     
 
-	//now we need to send the initialization settings to the TSL2591's registers
-	
-	
+	//restart but this time change the registers on the TSL2591
+	I2C2_CR2 |= (0x3 << 16); //NBYTES = 3 (send 3 bytes before automatic stop condition)
 
+	while (bus_state != 1) bus_state = gpio_i2c2_bus_poll(); //loop until bus is idle
+	while ((I2C2_ISR & 1) != 1); //loop until transmission register is empty
 
-	
-	
+	I2C2_TXDR = ((TSL2591_ADDRESS >> 1) + 0); //load the address into the transmission register
+	I2C2_CR2 |= (1 << 13); //send start condition
 
+	while ((I2C2_ISR & 1) != 1); //loop until the transmission register is empty
+
+	I2C2_TXDR = TSL2591_Settings_Message0; 
+	while ((I2C2_ISR & 1) != 1); //loop until the transmission register is empty
+
+	I2C2_TXDR = TSL2591_Settings_Message1; 
+	while ((I2C2_ISR & 1) != 1); //loop until the transmission register is empty
+	
+	//loop until the Stop condition is sent
+	while (!(I2C2_ISR >> 5) & 1); 
+
+	I2C2_ICR |= (1 << 5); //clear Stop flag
+	
 }
+
+//Write to a register in the target device then read and store 4 bytes to the read_buffer
+void i2c2_write_read(uint32_t volatile *read_buffer) {
+	uint8_t i; //index declaration	
+	
+	//do the write stuff
+	
+	//do the read stuff
+	for (i = 0; i < 4; i++) {
+		while (!((I2C2_ISR >> 2) & 1)); //loop until RXNE bit is set
+
+		//transfer data from register to read_buffer in big-endian format
+		*read_buffer = (I2C2_RXDR >> (8*i)); 
+	}
+
+	//
+
+		
+
+}	

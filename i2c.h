@@ -5,9 +5,11 @@
  *  Date: 10/13/2024
  */
 
-#ifndef INC_GPIO_H_
-#define INC_GPIO_H_
+#ifndef INC_I2C_H_
+#define INC_I2C_H_
 
 void i2c2_init(void);
+void i2c2_target_init(void);
+void i2c2_write_read(uint32_t volatile *read_buffer);
 
-#endif /* INC_GPIO_H_ */
+#endif /* INC_I2C_H_ */

@@ -35,7 +35,9 @@ int main(void) {
 
 	//initialize button interrupts and i2c 
 	exti_init();
+	exti_enable();
 	nvic_enable();
+	i2c2_init();
 	//nvic_priority();
 
 	while(1);
