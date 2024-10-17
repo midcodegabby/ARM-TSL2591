@@ -12,6 +12,7 @@
 
 #include "i2c.h"
 #include "gpio.h"
+#include "nvic.h"
 
 //definitions and register mapping (for STM32)
 #define I2C2 0x40005800
@@ -45,7 +46,7 @@ void i2c2_init(void) {
 	I2C2_CR1 &= ~1; //disable I2C2 Peripheral
 
 	//enable interrupts here... if I want any
-	//I2C2_CR1 |= (1 << 4); //enable NACK interrupt
+	I2C2_CR1 |= (1 << 4); //enable NACK interrupt
 
 	//set up timing for 16MHz I2CCLK and 100KHz transmission frequency (from ST Reference Manual)
 	I2C2_TIMINGR |= (0x3 << 28); //PRESC
@@ -142,3 +143,17 @@ uint8_t i2c2_check_bus(uint32_t count) {
 	I2C2_TIMEOUTR &= ~(1 << 15); //disable timout timer
 	return 0; //bus did not go idle
 }
+
+//Function to resolve I2C deadlocks
+void i2c2_resolve_deadlock(void) {
+	
+}
+
+
+//IRQ handler for I2C2 event interrupts; for now for NACKs
+void I2C2_EV_IRQHandler(void) {
+	nvic_disable();
+	printf("NACK Detected!!!\n");
+	nvic_enable();
+}
+
