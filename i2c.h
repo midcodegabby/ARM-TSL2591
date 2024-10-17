@@ -11,5 +11,6 @@
 void i2c2_init(void);
 void i2c2_target_init(void);
 void i2c2_write_read(uint32_t volatile *read_buffer);
+uint8_t i2c2_check_bus(uint32_t count);
 
 #endif /* INC_I2C_H_ */

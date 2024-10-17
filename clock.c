@@ -56,8 +56,10 @@ void peripheral_clk_init(void) {
 	RCC_AHB2ENR |= (1 << 2); //GPIOC enable
 	RCC_AHB2ENR |= (1 << 5); //GPIOF enable
 	RCC_APB2ENR |= (1 << 0); //SYSCFG enable
-	RCC_APB1ENR |= (1 << 22); //I2C2 enable
 
 	//Set I2C2CLK to HSI16
 	RCC_CCIPR |= (1 << 15);
+
+	RCC_APB1ENR |= (1 << 22); //I2C2 enable
+
 }
