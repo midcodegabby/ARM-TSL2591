@@ -22,8 +22,12 @@ extern void initialize_monitor_handles(void);
 //globals
 
 int main(void) {
-	int i = 0;
-	uint32_t volatile value = 0;
+	
+	//TSL2591 init messages
+	uint32_t init_msg1 = 0xA0;
+	uint32_t init_msg2 = 0x0003;
+
+	//uint32_t volatile value = 0;
 	//initialize clocks
 	sysclk_init();
 	hsi_init();
@@ -38,15 +42,14 @@ int main(void) {
 	exti_init();
 	exti_enable();
 	nvic_enable();
+	nvic_priority();
 	i2c2_init();
-	i2c2_target_init();
 
-	for (i = 0; i < 32; i++);
-
-	//nvic_priority();
-
+	i2c2_write(1, &init_msg1);
+	i2c2_write(2, &init_msg2);
+	
 	while(1) {
-		//i2c2_write_read(&value);
+
 	}
 
 	return 0;

@@ -31,42 +31,13 @@
 #define GPIOC_PUPDR (*((volatile uint32_t *) (GPIOC + 0x0C)))
 #define GPIOC_IDR (*((volatile uint32_t *) (GPIOC + 0x10)))
 
-/*
-#define GPIOF_MODER (*((volatile uint32_t *) GPIOF))
-#define GPIOF_OTYPER (*((volatile uint32_t *) (GPIOF + 0x4)))
-#define GPIOF_OSPEEDR (*((volatile uint32_t *) (GPIOF + 0x8)))
-#define GPIOF_PUPDR (*((volatile uint32_t *) (GPIOF + 0xC)))
-#define GPIOF_IDR (*((volatile uint32_t *) (GPIOF + 0x10)))
-#define GPIOF_AFRL (*((volatile uint32_t *) (GPIOF + 0x20)))
-*/
-/*
-//initialize PF0 to be I2C2_SDA, PF1 to be I2C2_SCL
-void gpio_i2c2_init(void) {
-	GPIOF_AFRL |= (1 << 2); //AF4 for PF0
-	GPIOF_AFRL |= (1 << 6); //AF4 for PF1
-
-	GPIOF_OSPEEDR |= (0x3 | (0x3 << 2)); //set very high speed for PF0/PF1
-
-	//NEW:
-	GPIOF_PUPDR |= (1 | (1 << 2)); //pull ups
-
-	GPIOF_OTYPER |= (0x3); //open drain for PF0 and PF1
-	
-	GPIOF_MODER &= ~(1); //alt function for PF0 
-	GPIOF_MODER &= ~(1 << 2); //alt function for PF1
-
-}
-*/
-
+//initialize PB13 to be I2C2_SCL, PB14 to be I2C2_SDA
 void gpio_i2c2_init(void) {
 	GPIOB_AFRH |= (0x4 << 20); //AF4 for PB13
 	GPIOB_AFRH |= (0x4 << 24); //AF4 for PF14
 
 	GPIOB_OSPEEDR |= ((0x3 << 26) | (0x3 << 28)); //set very high speed for PB13/PB14
-
-	//NEW:
 	GPIOB_PUPDR |= ((1 << 26) | (1 << 28)); //pull ups for PB13/PB14
-
 	GPIOB_OTYPER |= (0x3 << 13); //open drain for PB13/PB14
 	
 	GPIOB_MODER &= ~(1 << 26); //alt function for PB13 

@@ -61,64 +61,34 @@ void i2c2_init(void) {
 	I2C2_CR1 |= 1; //enable I2C2 Peripheral
 }
 
-//initialize communications with the target device and initialize the target device's registers
-void i2c2_target_init() {
-	I2C2_CR2 |= (1 << 25); //set autoend
-	I2C2_CR2 |= (0x2 << 16); //NBYTES = 2 (send 2 bytes before automatic stop condition)
+//write to the target; this function only allows up to 2 bytes of data transmission at once
+void i2c2_write(uint8_t NBYTES, uint32_t *w_buffer) {
+	I2C2_CR2 &= ~(0xFF << 16); //clear NBYTES; if this is not done then sometimes no stop condition
+	I2C2_CR2 |= (NBYTES << 16); //NBYTES = NBYTES parameter
 
 	//loop until bus is idle
-	//int count = 0;
-	//uint8_t timeout = 0xFF;
-/*	while (1) {
-	       	timeout = i2c2_check_bus(count);
-		if (timeout == 1) break;
+	int count = 0;
+	uint8_t timeout = 0xFF;
+	while (timeout != 1) timeout = i2c2_check_bus(count); 
+
+	I2C2_CR2 |= (1 << 13); //send start condition
+
+	//loop until all bytes are sent
+	for (count = NBYTES-1; count > -1; count--) {
+		while (!((I2C2_ISR >> 1) & 1)); //loop until TXIS flag is set
+		I2C2_TXDR = ((*w_buffer >> (8*count)) & 0xFF); 
 	}
-*/
 
-	//while ((I2C2_ISR >> 15) & 1); //wait for previous stop condition
-	//printf("Bus is idle\n");
+	//delay for target device to process 2nd data byte
+	for (count = 0; count < 500; count++);
+
+	I2C2_CR2 |= (1 << 14); //send STOP condition
+	I2C2_ICR |= (1 << 5); //clear stop flag
 	
-	I2C2_CR2 |= (1 << 13); //send start condition
-	
-	//I don't think I need to include address?
-	while (!(I2C2_ISR >> 1) & 1); //wait for TXIS bit set to put data in I2C_TXDR
-	I2C2_TXDR = ((TSL2591_ADDRESS >> 1) + 0); //Transmission register <- Address + W
-
-	while (!(I2C2_ISR >> 1) & 1); //loop until TXIS bit is set and we can put data in I2C2_TXDR
-	I2C2_TXDR = TSL2591_Init_Message; //load the init message into the transmission register
-
-	while (!(I2C2_ISR >> 5) & 1); //wait for STOP condition
-	I2C2_ICR |= (1 << 5); //clear Stop flag
-
-	//restart but this time change the registers on the TSL2591
-	I2C2_CR2 |= (0x3 << 16); //NBYTES = 3 (send 3 bytes before automatic stop condition)
-
-	//printf("We completed the first transmission\n");
-
-	//while ((I2C2_ISR >> 15) & 1); //wait for previous stop condition
-	I2C2_CR2 |= (1 << 13); //send start condition
-
-	//printf("We sent the start condition\n");
-
-	while (!(I2C2_ISR >> 1) & 1); //loop until TXIS bit is set and we can put data in I2C2_TXDR
-	I2C2_TXDR = ((TSL2591_ADDRESS >> 1) + 0); //Transmission register <- Address + W
-	
-	//printf("We sent address\n");
-
-	while (!(I2C2_ISR >> 1) & 1); //loop until TXIS bit is set and we can put data in I2C2_TXDR
-	I2C2_TXDR = TSL2591_Settings_Message0; 
-
-	while (!(I2C2_ISR >> 1) & 1); //loop until TXIS bit is set and we can put data in I2C2_TXDR
-	I2C2_TXDR = TSL2591_Settings_Message1; 
-
-	while (!(I2C2_ISR >> 5) & 1);  //wait for STOP condition
-	I2C2_ICR |= (1 << 5); //clear Stop flag
-
-	//printf("At end of i2c2_target_init()\n");
 }
 
 //Write to a register in the target device then read and store 4 bytes to the read_buffer
-void i2c2_write_read(uint32_t volatile *read_buffer) {
+void i2c2_write_read(uint32_t volatile *r_buffer) {
 	//uint8_t i; //index declaration	
 	
 	//do the write stuff
@@ -158,7 +128,7 @@ uint8_t i2c2_check_bus(int count) {
 	I2C2_TIMEOUTR |= (0xC3); //25 ms = 0xC3
 	I2C2_TIMEOUTR |= (1 << 15); //enable timeout timer
 	
-	for (count = 0; count < 1500000; count++); //loop for about 30 ms 
+	for (count = 0; count < 1440000; count++); //loop for about 30 ms 
 	 
 	if ((I2C2_ISR >> 12) & 1) {
 		I2C2_ICR &= ~(1 << 12); //clear timout flag
