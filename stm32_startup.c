@@ -12,6 +12,7 @@
 
 #define STACK_START SRAM_END
 #define GPIOA_ODR (*((volatile uint32_t *) (0x48000014)))
+#define CPACR (*((volatile uint32_t *) (0xE000ED88)))
 
 
 //use extern uint32_t to access symbols from linker script!
@@ -268,6 +269,19 @@ void Reset_Handler(void){
 	for(uint32_t i=0; i < size; i++){
 		*pDst++ = 0;
 	}
+
+	/*
+	//enable FPU using ASM
+	__asm__ ("ldr.w r0, =0xE000ED88 \n\t"
+		 "ldr 	r1, [r0] \n\t"
+		 "orr 	r1, r1, #(0xF << 20) \n\t"
+		 "str 	r1, [r0] \n\t"
+		 "dsb \n\t"
+		 "isb");
+	*/
+
+	//enable FPU
+	CPACR |= (0xF << 20);
 
 	//call initialization function of stdlib 
 	__libc_init_array();

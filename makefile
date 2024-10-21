@@ -2,16 +2,16 @@
 # [make func_name] --> e.g., make clean
 CC= arm-none-eabi-gcc
 MACH= cortex-m4
-CFLAGS= -c -mcpu=$(MACH) -mthumb -mfloat-abi=soft --std=gnu11 -Wall -o0 -g3
-LDFLAGS= -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=nano.specs -T stm32_ls.ld -Wl,-Map=final.map 
-LDFLAGS_SH= -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=rdimon.specs -T stm32_ls.ld -Wl,-Map=final.map 
+CFLAGS= -c -mcpu=$(MACH) -mthumb -mfloat-abi=hard -mfpu=auto --std=gnu11 -Wall -o0 -g3
+LDFLAGS= -mcpu=$(MACH) -mthumb -mfloat-abi=hard -mfpu=auto --specs=nano.specs -T stm32_ls.ld -Wl,-Map=final.map 
+LDFLAGS_SH= -mcpu=$(MACH) -mthumb -mfloat-abi=hard -mfpu=auto --specs=rdimon.specs -T stm32_ls.ld -Wl,-Map=final.map 
 # -Wl specifies a linker input, -nostdlib used for no stdlib, soft means using nano emulation of fpu
 #  --specs=nano.specs allows for stdlib nano
 #  --specs=rdimon.specs allows for semihosting; LDFLAGS_SH is LDFLAGS for Semi Hosting!
 
-all: main.o gpio.o clock.o i2c.o nvic.o exti.o systick.o sysmem.o syscalls.o stm32_startup.o final.elf 
+all: main.o gpio.o clock.o i2c.o nvic.o exti.o tsl2591_functions.o systick.o sysmem.o syscalls.o stm32_startup.o final.elf 
 
-semi: main.o gpio.o clock.o i2c.o nvic.o exti.o systick.o sysmem.o syscalls.o stm32_startup.o final_sh.elf
+semi: main.o gpio.o clock.o i2c.o nvic.o exti.o tsl2591_functions.o systick.o sysmem.o syscalls.o stm32_startup.o final_sh.elf
 
 main.o:main.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -31,6 +31,9 @@ nvic.o:nvic.c
 exti.o:exti.c
 	$(CC) $(CFLAGS) -o $@ $^
 
+tsl2591_function.o:tsl2591_functions.c
+	$(CC) $(CFLAGS) -o $@ $^
+
 systick.o:systick.c
 	$(CC) $(CFLAGS) -o $@ $^
 	
@@ -43,11 +46,11 @@ syscalls.o:syscalls.c
 stm32_startup.o:stm32_startup.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-final.elf: main.o gpio.o clock.o i2c.o nvic.o exti.o systick.o sysmem.o syscalls.o stm32_startup.o
+final.elf: main.o gpio.o clock.o i2c.o nvic.o exti.o tsl2591_functions.o systick.o sysmem.o syscalls.o stm32_startup.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 # do not link syscalls.o with .elf file; stdlib does the syscalls!
-final_sh.elf: main.o gpio.o clock.o i2c.o nvic.o exti.o systick.o stm32_startup.o
+final_sh.elf: main.o gpio.o clock.o i2c.o nvic.o exti.o tsl2591_functions.o systick.o stm32_startup.o
 	$(CC) $(LDFLAGS_SH) -o $@ $^
 
 clean:
