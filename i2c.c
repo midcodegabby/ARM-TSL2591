@@ -31,15 +31,7 @@
 #define I2C2_RXDR (*((volatile uint32_t *) (I2C2 + 0x24)))
 #define I2C2_TXDR (*((volatile uint32_t *) (I2C2 + 0x28)))
 
-
-//define some TSL2591 Registers (and address) (light sensor)
 #define TSL2591_ADDRESS 0x29
-#define TSL2591_ENABLE 0x01
-#define TSL2591_ALS_DATA 0x14
-
-#define TSL2591_Init_Message 0b10100000
-#define TSL2591_Settings_Message0 0x00
-#define TSL2591_Settings_Message1 0x03
 
 //initialize I2C2 registers 
 //I2C2 Settings: 100KHz SCL Frequency, 7-bit addressing mode
@@ -63,6 +55,7 @@ void i2c2_init(void) {
 
 //write to the target; this function only allows up to 2 bytes of data transmission at once
 void i2c2_write(uint8_t NBYTES, uint32_t *w_buffer) {
+	I2C2_CR2 &= ~(1 << 10); //set to Write
 	I2C2_CR2 &= ~(0xFF << 16); //clear NBYTES; if this is not done then sometimes no stop condition
 	I2C2_CR2 |= (NBYTES << 16); //NBYTES = NBYTES parameter
 
@@ -84,42 +77,31 @@ void i2c2_write(uint8_t NBYTES, uint32_t *w_buffer) {
 
 	I2C2_CR2 |= (1 << 14); //send STOP condition
 	I2C2_ICR |= (1 << 5); //clear stop flag
-	
 }
 
-//Write to a register in the target device then read and store 4 bytes to the read_buffer
-void i2c2_write_read(uint32_t volatile *r_buffer) {
-	//uint8_t i; //index declaration	
-	
-	//do the write stuff
-	I2C2_CR2 &= ~(1 << 25); //clear autoend
-	I2C2_CR2 |= (0x2 << 16); //NBYTES = 2 (send 2 bytes before automatic stop condition)
+//Write to a register in the target device then read and store 4 bytes to the r_buffer
+void i2c2_write_read(uint32_t *target_reg, uint32_t *r_buffer) {
+	i2c2_write(1, target_reg); //write to target register first
+
+	I2C2_CR2 |= (1 << 10); //set to Read 
+	I2C2_CR2 &= ~(0xFF << 16); //clear NBYTES; if this is not done then sometimes no stop condition
+	I2C2_CR2 |= (0x4 << 16); //NBYTES = 4 for the TSL2591 data registers
+
+	//loop until bus is idle
+	int count = 0;
+	uint8_t timeout = 0xFF;
+	while (timeout != 1) timeout = i2c2_check_bus(count); 
 
 	I2C2_CR2 |= (1 << 13); //send start condition
-	
-	//I don't think I need to include address?
-	while (!(I2C2_ISR >> 1) & 1); //wait for TXIS bit set to put data in I2C_TXDR
-	I2C2_TXDR = ((TSL2591_ADDRESS >> 1) + 0); //Transmission register <- Address + W
 
-	while (!(I2C2_ISR >> 1) & 1); //loop until TXIS bit is set and we can put data in I2C2_TXDR
-	I2C2_TXDR = 0xFF; 
-	
-	while (!(I2C2_ISR >> 6) & 1); //wait for NBYTES to be transferred
-	I2C2_ICR |= (1 << 14); //send stop condition
-
-	while (!(I2C2_ISR >> 5) & 1); //wait for STOP condition
-	I2C2_ICR |= (1 << 5); //clear Stop flag
-
-/*
-	//do the read stuff
-	for (i = 0; i < 4; i++) {
-		while (!((I2C2_ISR >> 2) & 1)); //loop until RXNE bit is set
-
-		//transfer data from register to read_buffer in big-endian format
-		*read_buffer = (I2C2_RXDR >> (8*i)); 
+	//loop until all bytes are read 
+	for (count = 3; count > -1; count--) {
+		while (!((I2C2_ISR >> 2) & 1)); //loop until RXNE flag is set
+		*r_buffer |= (I2C2_RXDR >> 24) >> (count*8);
 	}
-*/
-	
+
+	I2C2_CR2 |= (1 << 14); //send STOP condition
+	I2C2_ICR |= (1 << 5); //clear stop flag
 }	
 
 //Use timers to check if the bus goes idle; returns 1 if idle and 0 if not idle
