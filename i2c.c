@@ -80,12 +80,11 @@ void i2c2_write(uint8_t NBYTES, uint32_t *w_buffer) {
 }
 
 //Write to a register in the target device then read and store 4 bytes to the r_buffer
-void i2c2_write_read(uint32_t *target_reg, uint32_t *r_buffer) {
-	i2c2_write(1, target_reg); //write to target register first
-
-	I2C2_CR2 |= (1 << 10); //set to Read 
+void i2c2_write_read(uint8_t NBYTES, uint32_t *target_reg, uint32_t *r_buffer) {
+	//complete write section first:
+	I2C2_CR2 &= ~(1 << 10); //set to Write
 	I2C2_CR2 &= ~(0xFF << 16); //clear NBYTES; if this is not done then sometimes no stop condition
-	I2C2_CR2 |= (0x4 << 16); //NBYTES = 4 for the TSL2591 data registers
+	I2C2_CR2 |= (1 << 16); //NBYTES = 1
 
 	//loop until bus is idle
 	int count = 0;
@@ -94,10 +93,29 @@ void i2c2_write_read(uint32_t *target_reg, uint32_t *r_buffer) {
 
 	I2C2_CR2 |= (1 << 13); //send start condition
 
+	while (!((I2C2_ISR >> 1) & 1)); //loop until TXIS flag is set
+	I2C2_TXDR = *target_reg & 0xFF; //only use first byte 
+
+	//delay for target device to process 2nd data byte
+	//for (count = 0; count < 500; count++);
+	
+	while ((I2C2_CR2 >> 13) & 1); //loop until START bit is not set
+
+	I2C2_CR2 |= (1 << 10); //set to Read 
+	I2C2_CR2 &= ~(0xFF << 16); //clear NBYTES; if this is not done then sometimes no stop condition
+	I2C2_CR2 |= (0x4 << 16); //NBYTES = 4 for the TSL2591 data registers
+
+	//loop until bus is idle
+	count = 0;
+	timeout = 0xFF;
+	while (timeout != 1) timeout = i2c2_check_bus(count); 
+
+	I2C2_CR2 |= (1 << 13); //send start condition
+
 	//loop until all bytes are read 
-	for (count = 3; count > -1; count--) {
+	for (count = 0; count < NBYTES; count++) {
 		while (!((I2C2_ISR >> 2) & 1)); //loop until RXNE flag is set
-		*r_buffer |= (I2C2_RXDR >> 24) >> (count*8);
+		*r_buffer |= (I2C2_RXDR >> 24) >> (count*8); //may need to reverse this!
 	}
 
 	I2C2_CR2 |= (1 << 14); //send STOP condition
