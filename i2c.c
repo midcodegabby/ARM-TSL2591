@@ -81,8 +81,8 @@ void i2c2_target_init() {
 	I2C2_CR2 |= (1 << 13); //send start condition
 	
 	//I don't think I need to include address?
-	//while (!(I2C2_ISR >> 1) & 1); //wait for TXIS bit set to put data in I2C_TXDR
-	//I2C2_TXDR = ((TSL2591_ADDRESS >> 1) + 0); //Transmission register <- Address + W
+	while (!(I2C2_ISR >> 1) & 1); //wait for TXIS bit set to put data in I2C_TXDR
+	I2C2_TXDR = ((TSL2591_ADDRESS >> 1) + 0); //Transmission register <- Address + W
 
 	while (!(I2C2_ISR >> 1) & 1); //loop until TXIS bit is set and we can put data in I2C2_TXDR
 	I2C2_TXDR = TSL2591_Init_Message; //load the init message into the transmission register
@@ -136,7 +136,6 @@ void i2c2_write_read(uint32_t volatile *read_buffer) {
 	
 	while (!(I2C2_ISR >> 6) & 1); //wait for NBYTES to be transferred
 	I2C2_ICR |= (1 << 14); //send stop condition
-	
 
 	while (!(I2C2_ISR >> 5) & 1); //wait for STOP condition
 	I2C2_ICR |= (1 << 5); //clear Stop flag

@@ -42,7 +42,7 @@ void sysclk_init(void) {
 
 //enable HSI16 clock
 void hsi_init(void) {
-//	RCC_CR |= (1 << 9); //enable HSI16 for Stop modes
+	RCC_CR |= (1 << 9); //enable HSI16 for Stop modes
 	RCC_CR |= (1 << 8); //enable HSI16
 	
 	//loop until HSI16 is ready
@@ -53,8 +53,9 @@ void hsi_init(void) {
 //initialize peripheral clocks: GPIOA/C/F, SYSCFG, I2C
 void peripheral_clk_init(void) {
 	RCC_AHB2ENR |= (1 << 0); //GPIOA enable
+	RCC_AHB2ENR |= (1 << 1); //GPIOB enable
 	RCC_AHB2ENR |= (1 << 2); //GPIOC enable
-	RCC_AHB2ENR |= (1 << 5); //GPIOF enable
+	//RCC_AHB2ENR |= (1 << 5); //GPIOF enable
 	RCC_APB2ENR |= (1 << 0); //SYSCFG enable
 
 	//Set I2C2CLK to HSI16
