@@ -11,7 +11,7 @@
 void i2c2_init(void);
 void i2c2_target_init(void);
 void i2c2_write_read(uint32_t volatile *read_buffer);
-uint8_t i2c2_check_bus(uint32_t count);
+uint8_t i2c2_check_bus(int count);
 void i2c2_resolve_deadlock(void);
 void I2C2_EV_IRQHandler(void);
 

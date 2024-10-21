@@ -23,6 +23,7 @@ extern void initialize_monitor_handles(void);
 
 int main(void) {
 	int i = 0;
+	uint32_t volatile value = 0;
 	//initialize clocks
 	sysclk_init();
 	hsi_init();
@@ -38,13 +39,15 @@ int main(void) {
 	exti_enable();
 	nvic_enable();
 	i2c2_init();
+	i2c2_target_init();
 
 	for (i = 0; i < 32; i++);
 
-	i2c2_target_init();
 	//nvic_priority();
 
-	while(1);
+	while(1) {
+		//i2c2_write_read(&value);
+	}
 
 	return 0;
 }

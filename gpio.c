@@ -25,6 +25,7 @@
 
 #define GPIOF_MODER (*((volatile uint32_t *) GPIOF))
 #define GPIOF_OTYPER (*((volatile uint32_t *) (GPIOF + 0x4)))
+#define GPIOF_OSPEEDR (*((volatile uint32_t *) (GPIOF + 0x8)))
 #define GPIOF_IDR (*((volatile uint32_t *) (GPIOF + 0x10)))
 #define GPIOF_AFRL (*((volatile uint32_t *) (GPIOF + 0x20)))
 
@@ -34,6 +35,8 @@ void gpio_i2c2_init(void) {
 	GPIOF_MODER &= ~(1 << 2); //alt function for PF1
 
 	GPIOF_OTYPER |= (0x3); //open drain for PF0 and PF1
+	
+	GPIOF_OSPEEDR |= (1 | (1 << 2)); //set medium speed for PF0/PF1
 	
 	GPIOF_AFRL |= (1 << 2); //AF4 for PF0
 	GPIOF_AFRL |= (1 << 6); //AF4 for PF1
