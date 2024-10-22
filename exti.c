@@ -13,7 +13,6 @@
 #include "clock.h"
 #include "nvic.h"
 #include "gpio.h"
-#include "systick.h"
 #include "main.h"
 #include "i2c.h"
 
