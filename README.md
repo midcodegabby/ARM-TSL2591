@@ -11,15 +11,16 @@ Things learned:
 Status:
 - In-Progress
 - Operational
-- Accuracy is low (30% to 50% off compared to Photone iPhone app measurements)
+- Accuracy is high (90% - 95% accuracy compared to Photone iPhone app measurements)
 
 Next steps:
-- Function to change gain and integration time
 - Switch from ~5s busy loop polling to interrupt polling
-- Improve accuracy using different gains and integration times
 
 Possible future implementations:
 - Function to reset I2C bus from a deadlocked state
 
-Youtube video link (testing):
+Youtube video link (final test; 90% - 95% accuracy):
+https://www.youtube.com/watch?v=m42UTxCefyY&t=5s
+
+Youtube video link (first test; 30%-50% accuracy):
 https://www.youtube.com/shorts/LOIbflBZAfY
