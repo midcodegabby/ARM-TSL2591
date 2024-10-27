@@ -70,8 +70,8 @@ int main(void) {
 	//printf("TSL2591 Raw Data: %lx\n", raw_data);
 	
 	while(1) {
-		//poll every 5 seconds: maybe use timer in the future
-		for (i = 0; i < 24000000; i++); 
+		//poll every 0.5 seconds: maybe use timer in the future
+		for (i = 0; i < 2400000; i++); 
 
 		i2c2_write_read(4, &data_reg, &raw_data); //collect data from TSL2591
 		lux_data = rawdata_to_lux(raw_data, _AGAIN, _ATIME); //convert raw data to lux
