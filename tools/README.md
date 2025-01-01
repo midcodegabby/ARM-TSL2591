@@ -1,6 +1,6 @@
 This makefile allows for programming and debugging the STM32L476xxx Nucleo-64   
 MCU/PCB with the files in this project. Make sure all files are in the same    
-directory when using this makefile (or use autotools or something).   
+directory when using this makefile.  
 
 Command uses:    
 all -> compile and link all files into a .elf file called final.elf    
